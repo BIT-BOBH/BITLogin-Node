@@ -1,6 +1,5 @@
 const encryptPassword = require('./encrypt').encryptPassword;
 const axios = require('axios').default;
-const fs = require('fs');
 const qs = require('qs');
 
 const API_INDEX = "https://login.bit.edu.cn/authserver/login";
@@ -79,7 +78,6 @@ class BITLogin{
             let resp = await axios.get(API_INDEX);
             this.context.cookies = resp.headers['set-cookie'].join(';');
             this.context.cookies = this.context.cookies.replace('HttpOnly', '');
-            fs.writeFileSync("./cookie.html", this.context.cookies);
             return true;
         }catch(err){
             return false;
@@ -178,9 +176,9 @@ class BITLogin{
      */
     async DoLogin(username, password, captcha = "", rememberMe = true){
         let encryptedPassword = encryptPassword(password, this.context.pwdEncryptSalt);
-        let headerWithCookies = CopyObject(DefaultHeader);
+        let headerWithCookies = {};
         headerWithCookies['Cookie'] = this.context.cookies;
-        // headerWithCookies['Content-Type'] = 'application/x-www-form-urlencoded';
+        headerWithCookies['Content-Type'] = 'application/x-www-form-urlencoded';
         if(captcha == null) captcha = "";
         let ret = {
             success: false,
@@ -201,17 +199,11 @@ class BITLogin{
                 lt: "",
                 execution: await cur_execution
             };
-            console.log(headerWithCookies);
-            let config = {
-                method: 'POST',
-                url: 'https://login.bit.edu.cn/authserver/login',
-                headers: headerWithCookies,
-                data: qs.stringify(param)
-            };
 
             let resp = await axios.post(API_LOGIN, qs.stringify(param), {
                 headers: headerWithCookies,
                 validateStatus: false,
+                maxRedirects: 0  //fucking stupid problem cost me 1 hour!
             });
             if(resp.status == 302){
                 // login successfully
@@ -230,9 +222,7 @@ class BITLogin{
                 ret.success = false;
                 ret.statusCode = resp.status;
                 ret.respHeader = resp.headers;
-                ret.errorReason = "unknown error";
-                fs.writeFileSync("./res.html", resp.data);
-                fs.writeFileSync("./res_header.html", JSON.stringify(ret));
+                ret.errorReason = GetHtmlErrorReason(resp.data);
                 return ret;
             }
         }catch(err){

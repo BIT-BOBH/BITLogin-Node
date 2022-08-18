@@ -2,8 +2,8 @@ const BITLogin = require('./BITLogin');
 const fs = require('fs');
 const readline = require('readline/promises');
 
-const TestAccount = "1120210002";
-const TestPassword = "abcdefg";
+const TestAccount = "1120210001";
+const TestPassword = "1234";
 
 async function Main(){
     let loginInstance = new BITLogin();
