@@ -1,0 +1,14 @@
+{
+  "name": "bitlogin",
+  "version": "1.0.0",
+  "description": "bit universal auth login frame work",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "bobh",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2"
+  }
+}
