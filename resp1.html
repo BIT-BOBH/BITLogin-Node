@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html><html>
+<!-- 移动端 --><!-- PC端 --><!-- 二维码扫码登录 --><!-- 兼容性登录 --><!-- 帐号登录或动态码登录 --><head>
+	<meta charset="utf-8"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/><title>统一身份认证平台</title>
+	<script>
+	    var inputUserNameTip = "\u8BF7\u8F93\u5165\u7528\u6237\u540D";
+	    var inputPasswordTip = "\u8BF7\u8F93\u5165\u5BC6\u7801";
+	    var inputCodeTip = "\u8BF7\u8F93\u5165\u9A8C\u8BC1\u7801";
+	    
+	    var inputMobileTip = "\u8BF7\u8F93\u5165\u624B\u673A\u53F7\u6216\u5B66\u53F7";
+	    var inputDynamicTip = "\u8BF7\u8F93\u5165\u52A8\u6001\u7801";
+	    //不转码，防止参数丢失
+	    var service = null;
+	    var type = null;
+	</script>
+	<script type="text/javascript">
+		if(service == '' || !service){
+	        service = '';//saml后缀
+	    }
+		var isQrLogin = "false";
+        var captchaSwitch = "1";
+		var needCaptcha = "";
+		var is_dynamicLogin = "false";
+	    var contextPath = "/authserver";
+	    var cllt = "";
+	</script>
+	<link rel="stylesheet" type="text/css" href="/authserver/bitColor/static/css/toastr.min.css?v=20220602.204141"><link rel="stylesheet" type="text/css" href="/authserver/bitColor/static/web/css/login.css?v=20220602.204141"/><link rel="stylesheet" type="text/css" href="/authserver/bitColor/static/web/iconfont/iconfont.css?v=20220602.204141"/><link rel="stylesheet" type="text/css" href="/authserver/bitColor/static/web/css/fido.css?v=20220602.204141"/><script type="text/javascript" src="/authserver/bitColor/static/common/jquery-latest.min.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/js/plugin/toastr.min.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/common/utils.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/common/common-header.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/common/encrypt.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/web/js/fido.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/web/js/schoolCombinedLogin.js?v=20220602.204141"></script>
+	<script type="text/javascript" src="/authserver/bitColor/static/web/js/login.js?v=20220602.204141"></script>
+</head>
+<body>
+	<div class="container">
+        <div class="dz-logo">
+            <img src="/authserver/bitColor/static/web/dzimages/logo.png" /><span class="split">|</span>
+            <span class="title">统一身份认证</span>
+        </div>
+        <!-- <div class="right-img">
+            <img th:src="@{${#themes.code('static.path')}+'/web/dzimages/bg4.png'}" />
+        </div> --><img class="shuimo" src="/authserver/bitColor/static/web/dzimages/shuimo.png" /><div class="wrap">
+			<!-- <a id="qrCodeA" class="qrcode" th:href="@{/login(type=qrcode)}"></a> --><!-- <span id="qrCodeA" class="qrcode" onclick="showQrLogin()"></span> --><a id="userNameLogin_a" class="pccode" href="/authserver/login?type=userNameLogin"></a>
+            <section class="main">
+				<!-- <div class="logo"><img id="logo" alt=""/></div> --><div class="tabHead" style="display: none">
+					<span id="fidoLoginSpan"><a id="fidoLogin_a" href="/authserver/login?type=fidoLogin" class="loginFont_a">生物识别登录</a></span>
+					<!-- <span id="pwdLoginSpan"><a id="userNameLogin_a" th:href="@{/login(type=userNameLogin)}" class="loginFont_a" th:text="#{ids.pc.login.view.type.userNameLogin}"></a></span> --><span id="pwdLoginSpan"><a id="userNameLogin_span" class="loginFont_a">账号登录</a></span>
+                    <!-- <span id="phoneLoginSpan"><a id="dynamicLogin_a" th:href="@{/login(type=dynamicLogin)}" class="loginFont_a" th:text="#{ids.pc.login.view.type.dynamicLogin}"></a></span> --><!-- <span id="qrLoginSpan"><a id="qrLogin_a" class="loginFont_a" th:text="#{ids.qr.login}" onclick="showQrLogin()"></a></span> --><span id="qrLoginSpan"><a id="qrLogin_span" class="loginFont_a">扫码登录</a></span>
+                </div>
+				<div class="login-pc">
+					<!-- fido登录 --><div id="fidoLoginDiv" style="display: none"><div style="height: 260px;margin-top: 60px">
+		<a href="javascript:void(0);" onclick="startAssertion();" class="loginFont_a">
+			<div class="fidoLogo">
+				<img class="fidoLogoImage" src="/authserver/default/static/web/images/fido.jpg"><div class="text">
+					<p id="ukey_info" style="color: #34363efa;">点击开启识别登录</p>
+				</div>
+			</div>
+		</a>
+		<form class="loginFromClass" method="post" id="loginFromId" action="/authserver/login">
+			<div style="color: red;margin: 5px auto;">
+				<span id="showErrorTip"></span>
+			</div>
+			<input type="hidden" id="_eventId" name="_eventId" value="submit" /><input type="hidden" id="username-fido" name="username" value=""><input type="hidden" id="responseJson-fido" name="responseJson" value=""><input type="hidden" id="cllt" name="cllt" value="fidoLogin"><input type="hidden" id="dllt" name="dllt" value="generalLogin"><input type="hidden" name="lt" id="lt" value="" /><input type="hidden" id="execution" name="execution" value="2dda383a-b729-4584-acab-7886bee6d27c_ZXlKaGJHY2lPaUpJVXpVeE1pSjkuNlZCV1ZPd29JUCs0NnRPOU45MTRMcHBONVVFMkIrL1k2bkN1b2FubUZIOWxNa0JGT0xoSDIwdlNFQk1JRHNVWTVvQ2VTZEdSQ2FtK0d2WG1UMnBpS2FUUk05TUgzb2JNM2d2Z0J2dHhURU9ScSt1Z0VkODNYdWxEMzkrb01rMXlCS3BLMXlBYXhlREszVXZlSkRvcU9DcSsrNG5wL2t6Um5XQ1M5a3FjZERnbVpCbnI5ZStoV1pFcnhJR2RCenN3cm14NlRrdTdyb3ZtSzhzR1U5R1FyZHlVMnYwcXRSTEo0MTlKM21lWFJldXZVZXdQN09qK1liNkpUZ25xV3dFMWYxSklOeC9ZSjdBbFd3OXZLS3A0aFd0OEZxMjlnRUtQM3hQcVVlN0lhT29NYTNnV3lucEUya0Z1aDl4bWluZUVnZUZ4c3lxaCs4aXlnOGwwVWdNVEpZYWozLzVIenovcVRQRGhGNTF2ckRCMVVVRE9weUx5SmZPUkZzZWtIS01iWkRDMGUrbVAvdlJab05mTjUzbjIwQjBpYkpVK0lpRWlZeUxYcDRUcjVmNEtOS1NBM09iLzJxS08yWVNRWmpTWmNmNXNlN3hNVHRZSU4vNG5VcFEzckt2a1dWMVNmbmpmQVVXeDF3bWIvcllzckRZN1JacHFaZWtmdGdkc2VLRS8rb291UWlqdFoxVG9OT3UzU3Q2ZWIwTE5KVCs0MW5Ga2pyL2REcXJLQi9wOEtQcy9nOFlDR0Z1ejBRalR5aDFGU2JhTXREM3hMdndWY0pEZjkraG0rMTFDVVIxcjlXb2dMSkFic0E3VEE2TnJHUVpYZWtDTzNsY3lMMkNmTmFaa2xCUFVTRDRVZU9ITEE0QTF1NmZvTGYveW9mZndzNE9samRYT2R5YTBEWUVydjd6Sjd3N1h5bDg5V1gxMmtzWEpCazJoR1pxVEtEbzQ5MHU0OWk1REZhWTY1QnFTQ2VCR0Z4cXQ3L1pDT29XSUlOMGw3RlhuaTFyL0o2YW5DZSs0S1V2Mnh3RlpvTllreXpEK3c3ZjlCRVg1ZFBVRyt1elEyc2ZwcnA4ZEV4Z1hiSTUyS0xDTzAzdmtzWVhDQmRZSG1idkpxcUF0Y3QrYi9SZE1yMTZhWFZTTmgyQWE1UGNRUkp3cldFS2dUNlQ5aWJGN2N5b0hWTTJ0Q2FISTNuWlZLdnVTa3V3UWliRXlDd09vd1h1ZWovRllITGcvRFR6WWRKQjNFb0hFOWNTZ3RuNWlrV1FRQlgwVldibnNVczJYRVQ3NU5tL3VuRW1pckI3RDE5bnduMGFYWG5qTmQxakhzMVRJVXhCUEdxc0lGVittUm1iak56UXlvVDJNOFNwM0tHOXViMVJDSWNaRmNySmJMNm1jVFd1KytjUDhTaUpLaWxNUGFyallNd1pJSkgrdisweGR2djBUZXh5VXBwWXdwUXlxSklnM1hvcnBTR0hWZ1ZSVStBaDRmb2RyTURyd0VwM2wvcHlWSm1lcFJJNjB0UmJPbThINU8wTHlDSWYyeHdYUlhOc2ZKTnU5dUkrNkExM2s1ZkVVTU5Hek9MZFlsYVgrZWZScDF2VkdHTVZiZCtZQ0xOcVQwS0xHRkZmRDRxMjJzWWR6WUZlRkxiNWtSZStrRE5hWVM5VHBoSE9iQlA2aTFBQWpFY3NEMDBvMC9YcnZsSU9vVWVsTWFZUFl3WlBMWDVMSC9OYmk4TmVSMWk4VkxrYit4d2ZwbE5MNkY2U0gzTC9EVGcxUnZaSFZad1JQTmliNGJUVlUzQm5oNll4L0pNMHJOTVJXMjFQekhRN3BHdz09LjFSdkpiOW1NdXpJQlZGSVJrVzR4elV3bDVMVmJxX002NGZ0Nk4zbkFtYkI5MExyM1NMZjBJSmVyTjlmck5yZ1oyeHRWdU15eUg0dGRKZ2JLWnlyUlJ3" /></form>
+		<div style="color: red;margin: 5px auto; display: none;" id="showFidoErrorTip">
+			<span id="showFidoErrorTipSpan" style="font-size: 14px;"></span>
+		</div>
+	</div></div>
+					<!-- 手机动态码登录 --><div id="phoneLoginDiv" style="display: none"><div>
+		<div class="methods">
+		</div>
+		<form class="loginFromClass" method="post" id="phoneFromId" action="/authserver/login">
+			<div>
+				<div class="form">
+					<!-- 动态码登录 --><div class="m-phone">
+						<div class="username item">
+							<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/user1.png" class="login-icon"/></span>
+							<input type="text" id="username" name="username" autocomplete="off" placeholder="请输入手机号/学号" title="请输入手机号/学号" value=""></div>
+						<div class="captcha item" id="captchaDiv">
+							<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/captcha1.png" class="login-icon"/></span>
+							<input type="text" id="captcha" name="captcha" placeholder="请输入验证码" title="请输入验证码" maxlength="10"><span class="captcha-img"> 
+								<img id="captchaImg" alt="验证码错误" height="30px"><a class="mask-inner captcha-refresh" onclick="reloadCaptcha(true)" href="javascript:void(0);">刷新</a>
+							</span>
+						</div>
+						<div class="code item">
+							<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/pass1.png" class="login-icon"/></span>
+							<i class="auth_icon auth_icon_bar"></i> 
+							<input type="text" id="dynamicCode" name="dynamicCode" placeholder="请输入短信动态码" title="请输入短信动态码" maxlength="10"><a class="get-code lang_text_ellipsis" href="javascript:void(0)"><em class="getCodeText">获取动态码</em></a>
+						</div>
+					</div>
+					<div class="phoneCode-remark lang_text_ellipsis">海外手机请按“国家代码-手机号”的格式输入，如：1-888888</div>
+				</div>
+				<div id="formErrorTip" class="form-errorTip lang_text_ellipsis">
+					<span id="showErrorTip" class="form-error"></span>
+					<span id="showWarnTip" class="form-warn"></span>
+				</div>
+				<div class="btn" style="margin-top: 36px;">
+					<a href="javascript:void(0);" class="login-btn lang_text_ellipsis" id="login_submit">登录</a>
+				</div>
+			</div>
+			<input type="hidden" id="_eventId" name="_eventId" value="submit" /><input type="hidden" id="cllt" name="cllt" value="dynamicLogin"><input type="hidden" id="dllt" name="dllt" value="generalLogin"><input type="hidden" name="lt" id="lt" value="" /><input type="hidden" id="encryptSalt" value="" /><input type="hidden" id="execution" name="execution" value="2dda383a-b729-4584-acab-7886bee6d27c_ZXlKaGJHY2lPaUpJVXpVeE1pSjkuNlZCV1ZPd29JUCs0NnRPOU45MTRMcHBONVVFMkIrL1k2bkN1b2FubUZIOWxNa0JGT0xoSDIwdlNFQk1JRHNVWTVvQ2VTZEdSQ2FtK0d2WG1UMnBpS2FUUk05TUgzb2JNM2d2Z0J2dHhURU9ScSt1Z0VkODNYdWxEMzkrb01rMXlCS3BLMXlBYXhlREszVXZlSkRvcU9DcSsrNG5wL2t6Um5XQ1M5a3FjZERnbVpCbnI5ZStoV1pFcnhJR2RCenN3cm14NlRrdTdyb3ZtSzhzR1U5R1FyZHlVMnYwcXRSTEo0MTlKM21lWFJldXZVZXdQN09qK1liNkpUZ25xV3dFMWYxSklOeC9ZSjdBbFd3OXZLS3A0aFd0OEZxMjlnRUtQM3hQcVVlN0lhT29NYTNnV3lucEUya0Z1aDl4bWluZUVnZUZ4c3lxaCs4aXlnOGwwVWdNVEpZYWozLzVIenovcVRQRGhGNTF2ckRCMVVVRE9weUx5SmZPUkZzZWtIS01iWkRDMGUrbVAvdlJab05mTjUzbjIwQjBpYkpVK0lpRWlZeUxYcDRUcjVmNEtOS1NBM09iLzJxS08yWVNRWmpTWmNmNXNlN3hNVHRZSU4vNG5VcFEzckt2a1dWMVNmbmpmQVVXeDF3bWIvcllzckRZN1JacHFaZWtmdGdkc2VLRS8rb291UWlqdFoxVG9OT3UzU3Q2ZWIwTE5KVCs0MW5Ga2pyL2REcXJLQi9wOEtQcy9nOFlDR0Z1ejBRalR5aDFGU2JhTXREM3hMdndWY0pEZjkraG0rMTFDVVIxcjlXb2dMSkFic0E3VEE2TnJHUVpYZWtDTzNsY3lMMkNmTmFaa2xCUFVTRDRVZU9ITEE0QTF1NmZvTGYveW9mZndzNE9samRYT2R5YTBEWUVydjd6Sjd3N1h5bDg5V1gxMmtzWEpCazJoR1pxVEtEbzQ5MHU0OWk1REZhWTY1QnFTQ2VCR0Z4cXQ3L1pDT29XSUlOMGw3RlhuaTFyL0o2YW5DZSs0S1V2Mnh3RlpvTllreXpEK3c3ZjlCRVg1ZFBVRyt1elEyc2ZwcnA4ZEV4Z1hiSTUyS0xDTzAzdmtzWVhDQmRZSG1idkpxcUF0Y3QrYi9SZE1yMTZhWFZTTmgyQWE1UGNRUkp3cldFS2dUNlQ5aWJGN2N5b0hWTTJ0Q2FISTNuWlZLdnVTa3V3UWliRXlDd09vd1h1ZWovRllITGcvRFR6WWRKQjNFb0hFOWNTZ3RuNWlrV1FRQlgwVldibnNVczJYRVQ3NU5tL3VuRW1pckI3RDE5bnduMGFYWG5qTmQxakhzMVRJVXhCUEdxc0lGVittUm1iak56UXlvVDJNOFNwM0tHOXViMVJDSWNaRmNySmJMNm1jVFd1KytjUDhTaUpLaWxNUGFyallNd1pJSkgrdisweGR2djBUZXh5VXBwWXdwUXlxSklnM1hvcnBTR0hWZ1ZSVStBaDRmb2RyTURyd0VwM2wvcHlWSm1lcFJJNjB0UmJPbThINU8wTHlDSWYyeHdYUlhOc2ZKTnU5dUkrNkExM2s1ZkVVTU5Hek9MZFlsYVgrZWZScDF2VkdHTVZiZCtZQ0xOcVQwS0xHRkZmRDRxMjJzWWR6WUZlRkxiNWtSZStrRE5hWVM5VHBoSE9iQlA2aTFBQWpFY3NEMDBvMC9YcnZsSU9vVWVsTWFZUFl3WlBMWDVMSC9OYmk4TmVSMWk4VkxrYit4d2ZwbE5MNkY2U0gzTC9EVGcxUnZaSFZad1JQTmliNGJUVlUzQm5oNll4L0pNMHJOTVJXMjFQekhRN3BHdz09LjFSdkpiOW1NdXpJQlZGSVJrVzR4elV3bDVMVmJxX002NGZ0Nk4zbkFtYkI5MExyM1NMZjBJSmVyTjlmck5yZ1oyeHRWdU15eUg0dGRKZ2JLWnlyUlJ3" /></form>
+	</div></div>
+					<!-- 用户名密码登录 --><div id="pwdLoginDiv" style="display: none"><div>
+		<div class="methods"></div>
+		<form class="loginFromClass" method="post" id="pwdFromId" action="/authserver/login">
+			<div class="form">
+				<!-- 用户名密码登录 --><div class="m-account">
+					<div class="username item">
+						<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/user1.png" class="login-icon"/></span> 
+						<input id="username" name="username" type="text" placeholder="请输入学号/工号" title="请输入学号/工号" value=""></div>
+					<div class="password item">
+						<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/pass1.png" class="login-icon"/></span>
+						<input id="password" name="passwordText" type="password"
+							   placeholder="请输入密码" title="请输入密码" maxlength="32"><input id="saltPassword" name="password" type="hidden"><!-- <a class="input_eye suffix-icon eyehide"></a> --></div>
+					<div class="captcha item hide" id="captchaDiv">
+						<span class="prex-icon"><img src="/authserver/bitColor/static/web/images/captcha1.png" class="login-icon"/></span> 
+						<input type="text" id="captcha" name="captcha" placeholder="请输入验证码" title="请输入验证码" maxlength="10"><span class="captcha-img">
+							<img id="captchaImg" alt="验证码错误" height="30px"><a class="mask-inner captcha-refresh" onclick="reloadCaptcha(true)" href="javascript:void(0);">刷新</a>
+						</span>
+					</div>
+					<div class="m-rememberMe lang_text_ellipsis">
+						<input type="checkbox" name="rememberMe" id="rememberMe" value="true" style="width:15px;margin-right:5px;"/><span style="font-size: 13px">7天免登录</span>
+					</div>
+				</div>
+				<div id="formErrorTip" class="form-errorTip lang_text_ellipsis">
+					<span id="showErrorTip" class="form-error"></span>
+					<span id="showWarnTip" class="form-warn"></span>
+				</div>
+				<div class="btn">
+					<a id="login_submit" href="javascript:void(0);" class="login-btn lang_text_ellipsis">登录</a>
+				</div>
+			</div>
+			<input type="hidden" id="_eventId" name="_eventId" value="submit" /><input type="hidden" id="cllt" name="cllt" value="userNameLogin"><input type="hidden" id="dllt" name="dllt" value="generalLogin"><input type="hidden" name="lt" id="lt" value="" /><input type="hidden" id="pwdEncryptSalt" value="ceV7ft03f9ciUTPN" /><input type="hidden" id="execution" name="execution" value="2dda383a-b729-4584-acab-7886bee6d27c_ZXlKaGJHY2lPaUpJVXpVeE1pSjkuNlZCV1ZPd29JUCs0NnRPOU45MTRMcHBONVVFMkIrL1k2bkN1b2FubUZIOWxNa0JGT0xoSDIwdlNFQk1JRHNVWTVvQ2VTZEdSQ2FtK0d2WG1UMnBpS2FUUk05TUgzb2JNM2d2Z0J2dHhURU9ScSt1Z0VkODNYdWxEMzkrb01rMXlCS3BLMXlBYXhlREszVXZlSkRvcU9DcSsrNG5wL2t6Um5XQ1M5a3FjZERnbVpCbnI5ZStoV1pFcnhJR2RCenN3cm14NlRrdTdyb3ZtSzhzR1U5R1FyZHlVMnYwcXRSTEo0MTlKM21lWFJldXZVZXdQN09qK1liNkpUZ25xV3dFMWYxSklOeC9ZSjdBbFd3OXZLS3A0aFd0OEZxMjlnRUtQM3hQcVVlN0lhT29NYTNnV3lucEUya0Z1aDl4bWluZUVnZUZ4c3lxaCs4aXlnOGwwVWdNVEpZYWozLzVIenovcVRQRGhGNTF2ckRCMVVVRE9weUx5SmZPUkZzZWtIS01iWkRDMGUrbVAvdlJab05mTjUzbjIwQjBpYkpVK0lpRWlZeUxYcDRUcjVmNEtOS1NBM09iLzJxS08yWVNRWmpTWmNmNXNlN3hNVHRZSU4vNG5VcFEzckt2a1dWMVNmbmpmQVVXeDF3bWIvcllzckRZN1JacHFaZWtmdGdkc2VLRS8rb291UWlqdFoxVG9OT3UzU3Q2ZWIwTE5KVCs0MW5Ga2pyL2REcXJLQi9wOEtQcy9nOFlDR0Z1ejBRalR5aDFGU2JhTXREM3hMdndWY0pEZjkraG0rMTFDVVIxcjlXb2dMSkFic0E3VEE2TnJHUVpYZWtDTzNsY3lMMkNmTmFaa2xCUFVTRDRVZU9ITEE0QTF1NmZvTGYveW9mZndzNE9samRYT2R5YTBEWUVydjd6Sjd3N1h5bDg5V1gxMmtzWEpCazJoR1pxVEtEbzQ5MHU0OWk1REZhWTY1QnFTQ2VCR0Z4cXQ3L1pDT29XSUlOMGw3RlhuaTFyL0o2YW5DZSs0S1V2Mnh3RlpvTllreXpEK3c3ZjlCRVg1ZFBVRyt1elEyc2ZwcnA4ZEV4Z1hiSTUyS0xDTzAzdmtzWVhDQmRZSG1idkpxcUF0Y3QrYi9SZE1yMTZhWFZTTmgyQWE1UGNRUkp3cldFS2dUNlQ5aWJGN2N5b0hWTTJ0Q2FISTNuWlZLdnVTa3V3UWliRXlDd09vd1h1ZWovRllITGcvRFR6WWRKQjNFb0hFOWNTZ3RuNWlrV1FRQlgwVldibnNVczJYRVQ3NU5tL3VuRW1pckI3RDE5bnduMGFYWG5qTmQxakhzMVRJVXhCUEdxc0lGVittUm1iak56UXlvVDJNOFNwM0tHOXViMVJDSWNaRmNySmJMNm1jVFd1KytjUDhTaUpLaWxNUGFyallNd1pJSkgrdisweGR2djBUZXh5VXBwWXdwUXlxSklnM1hvcnBTR0hWZ1ZSVStBaDRmb2RyTURyd0VwM2wvcHlWSm1lcFJJNjB0UmJPbThINU8wTHlDSWYyeHdYUlhOc2ZKTnU5dUkrNkExM2s1ZkVVTU5Hek9MZFlsYVgrZWZScDF2VkdHTVZiZCtZQ0xOcVQwS0xHRkZmRDRxMjJzWWR6WUZlRkxiNWtSZStrRE5hWVM5VHBoSE9iQlA2aTFBQWpFY3NEMDBvMC9YcnZsSU9vVWVsTWFZUFl3WlBMWDVMSC9OYmk4TmVSMWk4VkxrYit4d2ZwbE5MNkY2U0gzTC9EVGcxUnZaSFZad1JQTmliNGJUVlUzQm5oNll4L0pNMHJOTVJXMjFQekhRN3BHdz09LjFSdkpiOW1NdXpJQlZGSVJrVzR4elV3bDVMVmJxX002NGZ0Nk4zbkFtYkI5MExyM1NMZjBJSmVyTjlmck5yZ1oyeHRWdU15eUg0dGRKZ2JLWnlyUlJ3" /></form>
+	</div></div>
+					
+					<!-- 帐号激活|忘记密码 --><div class="help">
+                        <a id="retrievePassId" target="_blank" href="https://login.bit.edu.cn/campus-account/resetPassword" class="fo-password">忘记密码</a>
+						<span>&nbsp;|&nbsp;</span>
+                        <span>
+                            <!-- th:text="#{login.page.account.activity.btn}" --><a id="activationAccountId" target="_blank" href=" https://login.bit.edu.cn/campus-account/register" class="activation-account">注册激活</a>
+						</span>
+					</div>
+				</div>
+				<!-- 嵌入二维码登录 --><div class="login-qrcode hide">
+					<div>
+<script type="text/javascript" src="/authserver/bitColor/static/custom/js/qrcode.js?v=20220602.204141"></script>
+<div class="qr_scan_box">
+    <form method="post" id="qrLoginForm" action="/authserver/login" role="form">
+        <div id="qr_code">
+             <div class="qr_scan_code"><img id="qr_img" src=""/></div>
+             <span class="title lang_text_ellipsis">手机扫码  安全登录</span>
+        </div>
+
+        <div id="qr_success" style="display: none">
+            <div class="qr_scan_success">
+                <img src="/authserver/bitColor/static/custom/images/Success.png"/><span class="title title_h1 lang_text_ellipsis">扫描成功</span>
+                <span class="sub_title lang_text_ellipsis">请在手机上『确认登录』</span>
+            </div>
+            <div class="scan_footer lang_text_ellipsis"><a class="scan_a" href="javascript:refresh();">返回二维码</a></div>
+        </div>
+
+        <div id="qr_invalid" style="display: none">
+            <div class="qr_scan_code">
+                <img id="invalid_img" src=""/><div class="qr_scan_Invalid">
+                    <img id="qr_refresh" src="/authserver/bitColor/static/custom/images/refresh.png" onclick="refresh()"/></div>
+            </div>
+            <span class="title lang_text_ellipsis">手机扫码  安全登录</span>
+        </div>
+
+        <input type="hidden" name="lt" id="lt" value="" /><input type="hidden" name="uuid" id="uuid" value=""/><input type="hidden" name="cllt" value="qrLogin"/><input type="hidden" id="dllt" name="dllt" value="generalLogin"><input type="hidden" name="execution" value="2dda383a-b729-4584-acab-7886bee6d27c_ZXlKaGJHY2lPaUpJVXpVeE1pSjkuNlZCV1ZPd29JUCs0NnRPOU45MTRMcHBONVVFMkIrL1k2bkN1b2FubUZIOWxNa0JGT0xoSDIwdlNFQk1JRHNVWTVvQ2VTZEdSQ2FtK0d2WG1UMnBpS2FUUk05TUgzb2JNM2d2Z0J2dHhURU9ScSt1Z0VkODNYdWxEMzkrb01rMXlCS3BLMXlBYXhlREszVXZlSkRvcU9DcSsrNG5wL2t6Um5XQ1M5a3FjZERnbVpCbnI5ZStoV1pFcnhJR2RCenN3cm14NlRrdTdyb3ZtSzhzR1U5R1FyZHlVMnYwcXRSTEo0MTlKM21lWFJldXZVZXdQN09qK1liNkpUZ25xV3dFMWYxSklOeC9ZSjdBbFd3OXZLS3A0aFd0OEZxMjlnRUtQM3hQcVVlN0lhT29NYTNnV3lucEUya0Z1aDl4bWluZUVnZUZ4c3lxaCs4aXlnOGwwVWdNVEpZYWozLzVIenovcVRQRGhGNTF2ckRCMVVVRE9weUx5SmZPUkZzZWtIS01iWkRDMGUrbVAvdlJab05mTjUzbjIwQjBpYkpVK0lpRWlZeUxYcDRUcjVmNEtOS1NBM09iLzJxS08yWVNRWmpTWmNmNXNlN3hNVHRZSU4vNG5VcFEzckt2a1dWMVNmbmpmQVVXeDF3bWIvcllzckRZN1JacHFaZWtmdGdkc2VLRS8rb291UWlqdFoxVG9OT3UzU3Q2ZWIwTE5KVCs0MW5Ga2pyL2REcXJLQi9wOEtQcy9nOFlDR0Z1ejBRalR5aDFGU2JhTXREM3hMdndWY0pEZjkraG0rMTFDVVIxcjlXb2dMSkFic0E3VEE2TnJHUVpYZWtDTzNsY3lMMkNmTmFaa2xCUFVTRDRVZU9ITEE0QTF1NmZvTGYveW9mZndzNE9samRYT2R5YTBEWUVydjd6Sjd3N1h5bDg5V1gxMmtzWEpCazJoR1pxVEtEbzQ5MHU0OWk1REZhWTY1QnFTQ2VCR0Z4cXQ3L1pDT29XSUlOMGw3RlhuaTFyL0o2YW5DZSs0S1V2Mnh3RlpvTllreXpEK3c3ZjlCRVg1ZFBVRyt1elEyc2ZwcnA4ZEV4Z1hiSTUyS0xDTzAzdmtzWVhDQmRZSG1idkpxcUF0Y3QrYi9SZE1yMTZhWFZTTmgyQWE1UGNRUkp3cldFS2dUNlQ5aWJGN2N5b0hWTTJ0Q2FISTNuWlZLdnVTa3V3UWliRXlDd09vd1h1ZWovRllITGcvRFR6WWRKQjNFb0hFOWNTZ3RuNWlrV1FRQlgwVldibnNVczJYRVQ3NU5tL3VuRW1pckI3RDE5bnduMGFYWG5qTmQxakhzMVRJVXhCUEdxc0lGVittUm1iak56UXlvVDJNOFNwM0tHOXViMVJDSWNaRmNySmJMNm1jVFd1KytjUDhTaUpLaWxNUGFyallNd1pJSkgrdisweGR2djBUZXh5VXBwWXdwUXlxSklnM1hvcnBTR0hWZ1ZSVStBaDRmb2RyTURyd0VwM2wvcHlWSm1lcFJJNjB0UmJPbThINU8wTHlDSWYyeHdYUlhOc2ZKTnU5dUkrNkExM2s1ZkVVTU5Hek9MZFlsYVgrZWZScDF2VkdHTVZiZCtZQ0xOcVQwS0xHRkZmRDRxMjJzWWR6WUZlRkxiNWtSZStrRE5hWVM5VHBoSE9iQlA2aTFBQWpFY3NEMDBvMC9YcnZsSU9vVWVsTWFZUFl3WlBMWDVMSC9OYmk4TmVSMWk4VkxrYit4d2ZwbE5MNkY2U0gzTC9EVGcxUnZaSFZad1JQTmliNGJUVlUzQm5oNll4L0pNMHJOTVJXMjFQekhRN3BHdz09LjFSdkpiOW1NdXpJQlZGSVJrVzR4elV3bDVMVmJxX002NGZ0Nk4zbkFtYkI5MExyM1NMZjBJSmVyTjlmck5yZ1oyeHRWdU15eUg0dGRKZ2JLWnlyUlJ3"/><input type="hidden" name="_eventId" value="submit"/><input type="hidden" name="rmShown" value="1"></form>
+</div>
+</div>
+				</div>
+			</section>
+			<div class="footer" style="display: none;">
+				<!--跨校认证start--><!--跨校认证end--></div>
+			</div>
+        <div class="about">
+            <span>关于统一身份认证</span>
+            <!-- th:href="@{${#themes.code('static.path')}+'/web/html/aboutDetail.html'}" --><a class="aboutDetail" onclick="showAboutDetail()">点击查看</a>
+        </div>
+		<div class="language_switch t_switch" style="display: none;">
+			<select id="language" onchange="changeLanguage(this)" class="t_switch_list">
+	            <option value="zh_CN">简体中文</option>
+	            <option value="en">English</option>
+	        </select>
+		</div>
+	</div>
+    <div class="copyright">北京理工大学版权所有&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;技术支持：网络信息技术中心&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;联系电话：68914833</div>
+	<!-- 滑块验证码 --><div id="sliderCaptchaDiv" style="width: 100%;height: 100%;display: none;"></div>
+</body>
+<script src="/authserver/bitColor/static/custom/js/login-language.js?v=20220602.204141" type="text/javascript"></script>
+</html>
