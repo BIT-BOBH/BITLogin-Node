@@ -25,11 +25,12 @@ async function Main(){
         // input captcha
         console.log("Please input captcha(See captcha.jpeg)!");
         const cin = readline.createInterface(process.stdin,process.stdout);
-        captcha = await cin.question("Captch:");
+        captcha = await cin.question("Captcha:");
         console.log(`Your input is ${captcha}`);
         cin.close();
     }
 
+    // step3: Login!
     let loginRes = await loginInstance.DoLogin(TestAccount, TestPassword, captcha);
     if(loginRes.success){
         console.log("Login success! Cookies at loginRes.respHeader!");
