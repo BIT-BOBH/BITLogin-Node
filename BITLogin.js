@@ -4,7 +4,8 @@ const fs = require('fs');
 
 const API_INDEX = "https://login.bit.edu.cn/authserver/login";
 const API_LOGIN = "https://login.bit.edu.cn/authserver/login";
-const API_CAPTCHA = "https://login.bit.edu.cn/authserver/getCaptcha.htl";
+const API_CAPTCHA_CHECK = "https://login.bit.edu.cn/authserver/checkNeedCaptcha.htl";
+const API_CAPTCHA_GET = "https://login.bit.edu.cn/authserver/getCaptcha.htl";
 const DefaultHeader = {
     'Referer' : 'https://login.bit.edu.cn/authserver/login',
     'Host' : 'login.bit.edu.cn',
@@ -72,8 +73,6 @@ class BITLogin{
                 headers: headerWithCookies
             });
             this.context.pwdEncryptSalt = GetSaltParam(resp.data);
-            console.log("salt: " + this.context.pwdEncryptSalt);
-            fs.writeFileSync('./resp1.html', resp.data);
             return true;
         }catch(err){
             return false;
@@ -93,6 +92,48 @@ class BITLogin{
 
         this.inited = true;
         return true;
+    }
+
+    /* 
+        CheckCaptcha(username)
+        Return true if server requires captcha code
+    */
+    async CheckCaptcha(username){
+        let api = API_CAPTCHA_CHECK + `?username=${username}&_=${Date.now()}`;
+        try{
+            let headerWithCookies = CopyObject(DefaultHeader);
+            headerWithCookies['Cookie'] = this.context.cookies;
+            let resp = await axios.get(api,{
+                headers: headerWithCookies
+            });
+            return resp.data['isNeed'];
+        }catch(err){
+            return false;
+        }
+    }
+
+    /* 
+        GetCaptcha()
+        Return Captcha Image Data with format of Base64
+        Image is jpeg format
+    */
+    async GetCaptcha(){
+        let api = API_CAPTCHA_GET + `?${Date.now()}`;
+        try{
+            let headerWithCookies = CopyObject(DefaultHeader);
+            headerWithCookies['Cookie'] = this.context.cookies;
+            let resp = await axios.get(api,{
+                responseType: 'arraybuffer',
+                headers: headerWithCookies
+            });
+            return resp.data.toString('base64');
+        }catch(err){
+            return "";
+        }
+    }
+
+    async DoLogin(){
+
     }
 }
 
